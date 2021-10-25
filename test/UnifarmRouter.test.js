@@ -7,13 +7,13 @@
 // use(solidity)
 // const { MaxUint256 } = ethers.constants
 
-// import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
-// import IUniswapV2Pair from '@uniswap/v2-core/build/IUniswapV2Pair.json'
+// const { MockProvider, createFixtureLoader, deployContract } = require('ethereum-waffle')
+// const IUniswapV2Pair  = require('@uniswap/v2-core/build/IUniswapV2Pair.json')
 
-// import { v2Fixture } from './utils/fixtures'
-// import { expandTo18Decimals, getApprovalDigest, MINIMUM_LIQUIDITY } from './utils/utilities'
+// const { v2Fixture } = require('./utils/fixtures')
+// const { expandTo18Decimals, MINIMUM_LIQUIDITY } = require('./utils/utilities') 
 
-// import DeflatingERC20 from '../build/DeflatingERC20.json'
+// const DeflatingERC20 = require('../build/DeflatingERC20.json') 
 
 // const overrides = {
 //   gasLimit: 9999999
@@ -153,7 +153,7 @@
 //     expect(await provider.getBalance(router.address)).to.eq(0)
 //   })
 
-//   async function addLiquidity(DTTAmount: BigNumber, WETHAmount: BigNumber) {
+//   async function addLiquidity(DTTAmount, WETHAmount) {
 //     await DTT.approve(router.address, MaxUint256)
 //     await router.addLiquidityETH(DTT.address, DTTAmount, DTTAmount, WETHAmount, wallet.address, MaxUint256, {
 //       ...overrides,
@@ -338,7 +338,7 @@
 //     expect(await provider.getBalance(router.address)).to.eq(0)
 //   })
 
-//   async function addLiquidity(DTTAmount: BigNumber, DTT2Amount: BigNumber) {
+//   async function addLiquidity(DTTAmount, DTT2Amount) {
 //     await DTT.approve(router.address, MaxUint256)
 //     await DTT2.approve(router.address, MaxUint256)
 //     await router.addLiquidity(

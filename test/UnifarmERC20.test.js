@@ -68,7 +68,7 @@ describe('UnifarmERC20', function() {
   })
 
   it('transfer:fail', async () => {
-    await expect(token.transfer(other.address, TOTAL_SUPPLY.add(1))).to.be.reverted // ds-math-sub-underflow
+    await expect(token.transfer(other.address, TOTAL_SUPPLY.add(1))).to.be.reverted // 
     await expect(token.connect(other).transfer(wallet.address, 1)).to.be.reverted // ds-math-sub-underflow
   })
 
@@ -119,6 +119,7 @@ describe('UnifarmERC20', function() {
   })
 
   it('decreaseAllowance', async () => {
+    await expect(token.increaseAllowance(wallet.address, TEST_AMOUNT)).to.emit(token, 'Approval')
     await expect(token.decreaseAllowance(wallet.address, TEST_AMOUNT)).to.emit(token, 'Approval') // ds-math-sub-underflow
-  })
+  }) 
 })

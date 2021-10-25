@@ -7,6 +7,7 @@ import './libraries/UQ112x112.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IUnifarmFactory.sol';
 import './interfaces/IUnifarmCallee.sol';
+import 'hardhat/console.sol';
 
 contract UnifarmPair is IUnifarmPair, UnifarmERC20 {
     using SafeMath for uint256;
@@ -188,6 +189,7 @@ contract UnifarmPair is IUnifarmPair, UnifarmERC20 {
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
         uint256 liquidity = balanceOf[address(this)];
 
+        console.log(liquidity);
         uint256 _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
