@@ -79,6 +79,22 @@ describe('UnifarmPair', () => {
     expect(reserves[1]).to.eq(token1WithoutFees)
   })
 
+  it('mintFee', async () => {
+    const token0Amount = BigNumber.from(expandTo18Decimals(1))
+    const token1Amount = BigNumber.from(expandTo18Decimals(4))
+    await token0.transfer(pair.address, token0Amount)
+    await token1.transfer(pair.address, token1Amount)
+
+    await factory.updateLPFeeConfig(token0.address, token1.address, true, 1)
+    const token1WithoutFees = token1Amount.mul(1000 - lpFee).div(1000)
+    const token0WithoutFees = token0Amount.mul(1000 - lpFee).div(1000)
+
+    // console.log(token0WithoutFees, token0WithoutFees.toString())
+    // console.log(token1WithoutFees, token1WithoutFees.toString())
+    await expect(pair.mint(wallet.address))
+      .to.emit(pair, 'Transfer')
+  })
+
   it('burn', async () => {
     const token0Amount = BigNumber.from(expandTo18Decimals(1))
     const token1Amount = BigNumber.from(expandTo18Decimals(4))
@@ -101,6 +117,7 @@ describe('UnifarmPair', () => {
       // .withArgs(token0WithoutFees, token1WithoutFees)
       // .to.emit(pair, 'Mint')
       // .withArgs(wallet.address, token0WithoutFees, token1WithoutFees)
+    await pair.transfer(pair.address, '1994000000000000000')
     await expect(pair.connect(wallet).burn(wallet.address)).to.emit(pair, 'Burn')
   })
 

@@ -31,6 +31,7 @@ describe('UnifarmERC20', function() {
     expect(await token.decimals()).to.equal(18)
     expect(await token.totalSupply()).to.be.equal(ethers.BigNumber.from(TOTAL_SUPPLY))
     expect(await token.balanceOf(wallet.address)).to.equal(ethers.BigNumber.from(TOTAL_SUPPLY))
+    expect(await token.versionRecipient()).to.equal('1')
     expect(await token.DOMAIN_SEPARATOR()).to.equal(
       keccak256(
         defaultAbiCoder.encode(

@@ -7,30 +7,32 @@
 // use(solidity)
 // const { MaxUint256 } = ethers.constants
 
-// const { MockProvider, createFixtureLoader, deployContract } = require('ethereum-waffle')
-// const IUniswapV2Pair  = require('@uniswap/v2-core/build/IUniswapV2Pair.json')
+// const { MockProvider, loadFixture, createFixtureLoader, deployContract } = require('ethereum-waffle')
+// const IUniswapV2Pair  = require('../artifacts/contracts/UnifarmPair.sol/UnifarmPair.json')
 
 // const { v2Fixture } = require('./utils/fixtures')
 // const { expandTo18Decimals, MINIMUM_LIQUIDITY } = require('./utils/utilities') 
 
-// const DeflatingERC20 = require('../build/DeflatingERC20.json') 
+// const DeflatingERC20 = require('../build/UniswapV2ERC20.json') 
 
 // const overrides = {
 //   gasLimit: 9999999
 // }
 
+// const TOTAL_SUPPLY = 1000000
+
 // describe('UniswapV2Router02', () => {
 //   let wallet
 //   let token
 
-//   beforeEach(async () => {
-//     ;[wallet] = await ethers.getSigners()
+// //   beforeEach(async () => {
+// //     ;[wallet] = await ethers.getSigners()
 
-//     const Token = await ethers.getContractFactory('ERC20')
-//     token0 = await Token.deploy(TOTAL_SUPPLY)
-//     token1 = await Token.deploy(TOTAL_SUPPLY)
-//     roouter = await Router.deploy()
-//   })
+// //     const Token = await ethers.getContractFactory('ERC20')
+// //     token0 = await Token.deploy(TOTAL_SUPPLY)
+// //     token1 = await Token.deploy(TOTAL_SUPPLY)
+// //     router = await Router.deploy()
+// //   })
 
 //   let token0
 //   let token1
@@ -127,8 +129,8 @@
 //   })
 // })
 
-// describe('fee-on-transfer tokens', () => {
-//  const [wallet] = provider.getWallets()
+// describe('fee-on-transfer tokens', async () => {
+//  const [wallet] = await ethers.getSigners()
 //   const loadFixture = createFixtureLoader(provider, [wallet])
 
 //   let DTT
@@ -309,13 +311,13 @@
 //   })
 // })
 
-// describe('fee-on-transfer tokens: reloaded', () => {
+// describe('fee-on-transfer tokens: reloaded', async () => {
 //   const provider = new MockProvider({
 //     hardfork: 'istanbul',
 //     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
 //     gasLimit: 9999999
 //   })
-//   const [wallet] = provider.getWallets()
+//   const [wallet] = await ethers.getSigners()
 //   const loadFixture = createFixtureLoader(provider, [wallet])
 
 //   let DTT
