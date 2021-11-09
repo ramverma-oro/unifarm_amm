@@ -3,6 +3,7 @@ pragma experimental ABIEncoderV2;
 
 import './GovernorBravoInterfaces.sol';
 import '../BaseRelayRecipient.sol';
+import 'hardhat/console.sol';
 
 contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoEvents, BaseRelayRecipient {
     /// @notice The name of this contract
@@ -186,6 +187,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
             state(proposalId) == ProposalState.Succeeded,
             'GovernorBravo::queue: proposal can only be queued if it is succeeded'
         );
+        console.log('Succeeded');
         Proposal storage proposal = proposals[proposalId];
         uint256 eta = add256(block.timestamp, timelock.delay());
         for (uint256 i = 0; i < proposal.targets.length; i++) {
@@ -220,10 +222,12 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
      * @param proposalId The id of the proposal to execute
      */
     function execute(uint256 proposalId) external payable {
+        // console.log(uint256(state(proposalId)));
         require(
             state(proposalId) == ProposalState.Queued,
             'GovernorBravo::execute: proposal can only be executed if it is queued'
         );
+        
         Proposal storage proposal = proposals[proposalId];
         proposal.executed = true;
         for (uint256 i = 0; i < proposal.targets.length; i++) {
@@ -408,7 +412,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
      * @param newVotingDelay new voting delay, in blocks
      */
     function _setVotingDelay(uint256 newVotingDelay) external {
-        require(_msgSender() == admin, 'GovernorBravo::_setVotingDelay: admin only');
+        require(msg.sender == admin, 'GovernorBravo::_setVotingDelay: admin only');
         require(
             newVotingDelay >= MIN_VOTING_DELAY && newVotingDelay <= MAX_VOTING_DELAY,
             'GovernorBravo::_setVotingDelay: invalid voting delay'
@@ -424,7 +428,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
      * @param newVotingPeriod new voting period, in blocks
      */
     function _setVotingPeriod(uint256 newVotingPeriod) external {
-        require(_msgSender() == admin, 'GovernorBravo::_setVotingPeriod: admin only');
+        require(msg.sender == admin, 'GovernorBravo::_setVotingPeriod: admin only');
         require(
             newVotingPeriod >= MIN_VOTING_PERIOD && newVotingPeriod <= MAX_VOTING_PERIOD,
             'GovernorBravo::_setVotingPeriod: invalid voting period'
@@ -441,7 +445,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
      * @param newProposalThreshold new proposal threshold
      */
     function _setProposalThreshold(uint256 newProposalThreshold) external {
-        require(_msgSender() == admin, 'GovernorBravo::_setProposalThreshold: admin only');
+        require(msg.sender == admin, 'GovernorBravo::_setProposalThreshold: admin only');
         require(
             newProposalThreshold >= MIN_PROPOSAL_THRESHOLD && newProposalThreshold <= MAX_PROPOSAL_THRESHOLD,
             'GovernorBravo::_setProposalThreshold: invalid proposal threshold'
@@ -471,7 +475,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
      */
     function _setPendingAdmin(address newPendingAdmin) external {
         // Check caller = admin
-        require(_msgSender() == admin, 'GovernorBravo:_setPendingAdmin: admin only');
+        require(msg.sender == admin, 'GovernorBravo:_setPendingAdmin: admin only');
 
         // Save current value, if any, for inclusion in log
         address oldPendingAdmin = pendingAdmin;

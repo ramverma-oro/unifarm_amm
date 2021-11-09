@@ -86,7 +86,6 @@ describe('governorBravo', () => {
     it("we add the sender to the proposal's voters set", async () => {
       await ethers.provider.send('evm_mine')
       await ethers.provider.send('evm_mine')
-
       let receipt = await gov.getReceipt(proposalId, accounts[2].address)
       expect(receipt.hasVoted).to.be.false
       await gov.connect(accounts[2]).castVote(proposalId, 1)

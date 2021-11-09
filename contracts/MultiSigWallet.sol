@@ -2,6 +2,7 @@
 pragma solidity =0.5.16;
 
 import './libraries/SafeMath.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title Multisignature wallet - Allows multiple parties to agree on
@@ -183,6 +184,7 @@ contract MultiSigWallet {
                 owners[i] = newOwner;
                 break;
             }
+
         isOwner[owner] = false;
         isOwner[newOwner] = true;
         emit OwnerRemoval(owner);
@@ -401,6 +403,7 @@ contract MultiSigWallet {
         _confirmations = new address[](count);
         for (i = 0; i < count; i++) _confirmations[i] = confirmationsTemp[i];
     }
+
 
     /**
      * @notice Get the list of transaction IDs in defined range.

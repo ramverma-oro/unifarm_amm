@@ -10,7 +10,7 @@
 // const { MockProvider, loadFixture, createFixtureLoader, deployContract } = require('ethereum-waffle')
 // const IUniswapV2Pair  = require('../artifacts/contracts/UnifarmPair.sol/UnifarmPair.json')
 
-// const { v2Fixture } = require('./utils/fixtures')
+// const {factoryFixture, pairFixture} = require('./utils/fixtures')
 // const { expandTo18Decimals, MINIMUM_LIQUIDITY } = require('./utils/utilities') 
 
 // const DeflatingERC20 = require('../build/UniswapV2ERC20.json') 
@@ -21,28 +21,30 @@
 
 // const TOTAL_SUPPLY = 1000000
 
-// describe('UniswapV2Router02', () => {
-//   let wallet
-//   let token
-
-// //   beforeEach(async () => {
-// //     ;[wallet] = await ethers.getSigners()
-
-// //     const Token = await ethers.getContractFactory('ERC20')
-// //     token0 = await Token.deploy(TOTAL_SUPPLY)
-// //     token1 = await Token.deploy(TOTAL_SUPPLY)
-// //     router = await Router.deploy()
-// //   })
+// describe('UniswapV2Router02', async () => {
+//     let wallet, other, trustedForwarder
 
 //   let token0
 //   let token1
 //   let router
-//   beforeEach(async function() {
-//     const fixture = await loadFixture(v2Fixture)
+
+//   beforeEach(async () => {
+//     ;[wallet, other, trustedForwarder] = await ethers.getSigners()
+//     // const Token = await ethers.getContractFactory('ERC20')
+//     // token0 = await Token.deploy(TOTAL_SUPPLY)
+//     // token1 = await Token.deploy(TOTAL_SUPPLY)
+    
+//     const provider = new MockProvider();
+//     // const v2Fixture = createFixtureLoader(provider, [wallet])
+
+//     const fixture = await loadFixture(pairFixture)
+//     console.log(token0)
 //     token0 = fixture.token0
-//     token1 = fixture.token1
-//     router = fixture.router02
+//     console.log(token0)
+//     token1 = fixture.token1 
+//     router = fixture.router
 //   })
+
 
 //   it('quote', async () => {
 //     expect(await router.quote(bigNumberify(1), bigNumberify(100), bigNumberify(200))).to.eq(bigNumberify(2))
@@ -138,7 +140,7 @@
 //   let router
 //   let pair
 //   beforeEach(async function() {
-//     const fixture = await loadFixture(v2Fixture)
+//     const fixture = await loadFixture(factoryFixture)
 
 //     WETH = fixture.WETH
 //     router = fixture.router02
@@ -312,22 +314,26 @@
 // })
 
 // describe('fee-on-transfer tokens: reloaded', async () => {
-//   const provider = new MockProvider({
-//     hardfork: 'istanbul',
-//     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-//     gasLimit: 9999999
-//   })
+//   // const provider = new MockProvider({
+//   //   hardfork: 'istanbul',
+//   //   mnemonic: '',
+//   //   gasLimit: 9999999
+//   // })
+
+  
 //   const [wallet] = await ethers.getSigners()
-//   const loadFixture = createFixtureLoader(provider, [wallet])
+//   // const loadFixture = createFixtureLoader(provider, [wallet])
 
 //   let DTT
 //   let DTT2
 //   let router
+
 //   beforeEach(async function() {
-//     const fixture = await loadFixture(v2Fixture)
-
-//     router = fixture.router02
-
+//     // const v2Fixture = createFixtureLoader(provider, [wallet])
+//     const fixture = await loadFixture(pairFixture)
+//     const provider = new MockProvider();
+//     router = fixture.router
+//     console.log(router.address)
 //     DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
 //     DTT2 = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
 

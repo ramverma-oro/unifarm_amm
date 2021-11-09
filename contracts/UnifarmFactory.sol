@@ -4,6 +4,7 @@ import './interfaces/IUnifarmFactory.sol';
 import './UnifarmPair.sol';
 import './Ownable.sol';
 import './BaseRelayRecipient.sol';
+import 'hardhat/console.sol';
 
 contract UnifarmFactory is IUnifarmFactory, Ownable, BaseRelayRecipient {
     address payable public feeTo;
