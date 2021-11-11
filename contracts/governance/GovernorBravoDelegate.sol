@@ -3,9 +3,10 @@ pragma experimental ABIEncoderV2;
 
 import './GovernorBravoInterfaces.sol';
 import '../BaseRelayRecipient.sol';
-import 'hardhat/console.sol';
+import './Proposals.sol';
+import '../interfaces/IERC20.sol';
 
-contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoEvents, BaseRelayRecipient {
+contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoEvents, BaseRelayRecipient, Propasals {
     /// @notice The name of this contract
     string public constant name = 'Unifarm Governor Bravo';
 
@@ -39,6 +40,18 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
 
     /// @notice The EIP-712 typehash for the ballot struct used by the contract
     bytes32 public constant BALLOT_TYPEHASH = keccak256('Ballot(uint256 proposalId,uint8 support)');
+
+    event SuccessClaim(
+        uint256 proposalId,
+        address reciever,
+        uint256 tokenAmount
+    );
+
+    event DefeatRefund(
+        uint256 proposalId,
+        address proposser,
+        uint256 tokenAmount
+    );
 
     constructor() public {
         admin = msg.sender;
@@ -106,12 +119,14 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
      * @return Proposal id of new proposal
      */
     function propose(
+        address _tokenAddress,
+        uint256 _amount,
         address[] memory targets,
         uint256[] memory values,
         string[] memory signatures,
         bytes[] memory calldatas,
         string memory description
-    ) public returns (uint256) {
+    ) public isAllowed(_tokenAddress) returns (uint256) {
         // Reject proposals before initiating as Governor
         require(initialProposalId != 0, 'GovernorBravo::propose: Governor Bravo not active');
         require(
@@ -146,6 +161,8 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
         proposalCount = add256(proposalCount, 1);
         Proposal memory newProposal = Proposal({
             id: proposalCount,
+            Token: _tokenAddress,
+            Amount: _amount,
             proposer: _msgSender(),
             eta: 0,
             targets: targets,
@@ -187,7 +204,6 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
             state(proposalId) == ProposalState.Succeeded,
             'GovernorBravo::queue: proposal can only be queued if it is succeeded'
         );
-        console.log('Succeeded');
         Proposal storage proposal = proposals[proposalId];
         uint256 eta = add256(block.timestamp, timelock.delay());
         for (uint256 i = 0; i < proposal.targets.length; i++) {
@@ -334,7 +350,8 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
      * @param proposalId The id of the proposal to vote on
      * @param support The support value for the vote. 0=against, 1=for, 2=abstain
      */
-    function castVote(uint256 proposalId, uint8 support) external {
+    function castVote(uint256 proposalId, uint8 support, uint256 _token) external {
+        voting(proposalId, _msgSender(), support, _token);
         emit VoteCast(_msgSender(), proposalId, support, castVoteInternal(_msgSender(), proposalId, support), '');
     }
 
@@ -347,8 +364,10 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
     function castVoteWithReason(
         uint256 proposalId,
         uint8 support,
-        string calldata reason
+        string calldata reason,
+        uint256 _token
     ) external {
+        voting(proposalId, _msgSender(), support, _token);
         emit VoteCast(_msgSender(), proposalId, support, castVoteInternal(_msgSender(), proposalId, support), reason);
     }
 
@@ -455,6 +474,33 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
 
         emit ProposalThresholdSet(oldProposalThreshold, proposalThreshold);
     }
+
+    /**
+     * @notice claim rewards
+     */
+    function claimReward(uint256 proposalId) external {
+        IERC20 token = proposals[proposalId].Token;
+        uint256 total = 0;
+        if (state(proposalId) == ProposalState.Succeeded) {
+            for (uint i = 0; i < _vote[proposalId].voters.length; i++) {
+                total = total + _vote[proposalId].voteMapping[_vote[proposalId].voters[i]][1];
+            }
+            uint256 value = _vote[proposalId].voteMapping[msg.sender][1];
+            uint256 share = (value/total) * proposals[proposalId].Amount;
+            token.transfer(this, msg.sender, share);
+            _vote[proposalId].voteMapping[msg.sender][1] = 0;
+            emit SuccessClaim(proposalId, msg.sender, share);
+        } 
+        address proposser = proposals[proposalId].proposser;
+        if (state(proposalId) == ProposalState.Defeated) {
+            // revert function for all and refund
+            uint256 amount = proposals[proposalId].Amount;
+            token.transfer(this, proposser, amount);
+            proposals[proposalId].Amount = 0;
+            emit DefeatRefund(proposalId, proposser, amount);
+        }
+    }
+    
 
     /**
      * @notice Initiate the GovernorBravo contract
