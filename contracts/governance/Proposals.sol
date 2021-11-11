@@ -12,7 +12,7 @@ contract Proposals is Ownable, BaseRelayRecipient {
     mapping(address => bool) public allowedList;
     
     // user address => proposalId => NumberofForVotes
-    mapping(address => mapping(uint256 => uint256)) votes;
+    mapping(address => mapping(uint256 => uint256)) public votes;
 
     event TokenPermitted(
         address allowAddress
