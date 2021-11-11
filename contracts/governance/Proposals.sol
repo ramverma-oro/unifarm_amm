@@ -2,7 +2,7 @@ pragma solidity =0.5.16;
 
 import "../Ownable.sol";
 
-contract Propasals is Ownable {
+contract Proposals is Ownable {
     // blacklist mapping
     mapping(address => bool) public allowedList;
 
@@ -40,7 +40,7 @@ contract Propasals is Ownable {
     
     // }
 
-    function voting(uint256 _proposalId, address _userAddress, uint8 _support, uint256 _token) external {
+    function Voting(uint256 _proposalId, address _userAddress, uint8 _support, uint256 _token) internal {
         _vote[_proposalId].proposalId = _proposalId;
         _vote[_proposalId].voteMapping[_userAddress][_support] = _token;
         _vote[_proposalId].voters.push(_userAddress);

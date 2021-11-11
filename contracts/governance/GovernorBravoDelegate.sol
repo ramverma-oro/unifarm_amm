@@ -6,7 +6,7 @@ import '../BaseRelayRecipient.sol';
 import './Proposals.sol';
 import '../interfaces/IERC20.sol';
 
-contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoEvents, BaseRelayRecipient, Propasals {
+contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, GovernorBravoEvents, BaseRelayRecipient {
     /// @notice The name of this contract
     string public constant name = 'Unifarm Governor Bravo';
 
@@ -351,7 +351,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
      * @param support The support value for the vote. 0=against, 1=for, 2=abstain
      */
     function castVote(uint256 proposalId, uint8 support, uint256 _token) external {
-        voting(proposalId, _msgSender(), support, _token);
+        Voting(proposalId, _msgSender(), support, _token);
         emit VoteCast(_msgSender(), proposalId, support, castVoteInternal(_msgSender(), proposalId, support), '');
     }
 
@@ -367,7 +367,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
         string calldata reason,
         uint256 _token
     ) external {
-        voting(proposalId, _msgSender(), support, _token);
+        Voting(proposalId, _msgSender(), support, _token);
         emit VoteCast(_msgSender(), proposalId, support, castVoteInternal(_msgSender(), proposalId, support), reason);
     }
 
@@ -479,7 +479,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
      * @notice claim rewards
      */
     function claimReward(uint256 proposalId) external {
-        IERC20 token = proposals[proposalId].Token;
+        IERC20 token = IERC20(proposals[proposalId].Token);
         uint256 total = 0;
         if (state(proposalId) == ProposalState.Succeeded) {
             for (uint i = 0; i < _vote[proposalId].voters.length; i++) {
@@ -487,15 +487,15 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
             }
             uint256 value = _vote[proposalId].voteMapping[msg.sender][1];
             uint256 share = (value/total) * proposals[proposalId].Amount;
-            token.transfer(this, msg.sender, share);
+            token.transferFrom(address(this), msg.sender, share);
             _vote[proposalId].voteMapping[msg.sender][1] = 0;
             emit SuccessClaim(proposalId, msg.sender, share);
         } 
-        address proposser = proposals[proposalId].proposser;
+        address proposser = proposals[proposalId].proposer;
         if (state(proposalId) == ProposalState.Defeated) {
             // revert function for all and refund
             uint256 amount = proposals[proposalId].Amount;
-            token.transfer(this, proposser, amount);
+            token.transferFrom(address(this), proposser, amount);
             proposals[proposalId].Amount = 0;
             emit DefeatRefund(proposalId, proposser, amount);
         }
