@@ -1,12 +1,13 @@
-pragma solidity =0.5.16;
+pragma solidity >= 0.5.16;
 pragma experimental ABIEncoderV2;
 
 import './GovernorBravoInterfaces.sol';
-import '../BaseRelayRecipient.sol';
+// import '../BaseRelayRecipient.sol';
 import './Proposals.sol';
 import '../interfaces/IERC20.sol';
+import '../libraries/SafeERC20.sol';
 
-contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, GovernorBravoEvents, BaseRelayRecipient {
+contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, GovernorBravoEvents {
     /// @notice The name of this contract
     string public constant name = 'Unifarm Governor Bravo';
 
@@ -49,8 +50,8 @@ contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, Gov
 
     event DefeatRefund(
         uint256 proposalId,
-        address proposser,
-        uint256 tokenAmount
+        address proposer,
+        uint256 refundAmount
     );
 
     constructor() public {
@@ -142,7 +143,7 @@ contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, Gov
         require(targets.length != 0, 'GovernorBravo::propose: must provide actions');
         require(targets.length <= proposalMaxOperations, 'GovernorBravo::propose: too many actions');
 
-        uint256 latestProposalId = latestProposalIds[_msgSender()];
+        {uint256 latestProposalId = latestProposalIds[_msgSender()];
         if (latestProposalId != 0) {
             ProposalState proposersLatestProposalState = state(latestProposalId);
             require(
@@ -154,6 +155,7 @@ contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, Gov
                 'GovernorBravo::propose: one live proposal per proposer, found an already pending proposal'
             );
         }
+        }
 
         uint256 startBlock = add256(block.number, votingDelay);
         uint256 endBlock = add256(startBlock, votingPeriod);
@@ -161,8 +163,8 @@ contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, Gov
         proposalCount = add256(proposalCount, 1);
         Proposal memory newProposal = Proposal({
             id: proposalCount,
-            Token: _tokenAddress,
-            Amount: _amount,
+            token: _tokenAddress,
+            amount: _amount,
             proposer: _msgSender(),
             eta: 0,
             targets: targets,
@@ -180,6 +182,10 @@ contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, Gov
 
         proposals[newProposal.id] = newProposal;
         latestProposalIds[newProposal.proposer] = newProposal.id;
+
+        // transfer token 
+        IERC20 token = IERC20(_tokenAddress);
+        token.transferFrom(_msgSender(), address(this), _amount);
 
         emit ProposalCreated(
             newProposal.id,
@@ -351,7 +357,9 @@ contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, Gov
      * @param support The support value for the vote. 0=against, 1=for, 2=abstain
      */
     function castVote(uint256 proposalId, uint8 support, uint256 _token) external {
-        Voting(proposalId, _msgSender(), support, _token);
+        if (support == 1) {
+            _updateForVotes(proposalId, _token);
+        }
         emit VoteCast(_msgSender(), proposalId, support, castVoteInternal(_msgSender(), proposalId, support), '');
     }
 
@@ -367,7 +375,9 @@ contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, Gov
         string calldata reason,
         uint256 _token
     ) external {
-        Voting(proposalId, _msgSender(), support, _token);
+        if (support == 1) {
+            _updateForVotes(proposalId, _token);
+        }
         emit VoteCast(_msgSender(), proposalId, support, castVoteInternal(_msgSender(), proposalId, support), reason);
     }
 
@@ -478,26 +488,22 @@ contract GovernorBravoDelegate is Proposals, GovernorBravoDelegateStorageV1, Gov
     /**
      * @notice claim rewards
      */
-    function claimReward(uint256 proposalId) external {
-        IERC20 token = IERC20(proposals[proposalId].Token);
-        uint256 total = 0;
-        if (state(proposalId) == ProposalState.Succeeded) {
-            for (uint i = 0; i < _vote[proposalId].voters.length; i++) {
-                total = total + _vote[proposalId].voteMapping[_vote[proposalId].voters[i]][1];
-            }
-            uint256 value = _vote[proposalId].voteMapping[msg.sender][1];
-            uint256 share = (value/total) * proposals[proposalId].Amount;
-            token.transferFrom(address(this), msg.sender, share);
-            _vote[proposalId].voteMapping[msg.sender][1] = 0;
-            emit SuccessClaim(proposalId, msg.sender, share);
-        } 
-        address proposser = proposals[proposalId].proposer;
-        if (state(proposalId) == ProposalState.Defeated) {
-            // revert function for all and refund
-            uint256 amount = proposals[proposalId].Amount;
-            token.transferFrom(address(this), proposser, amount);
-            proposals[proposalId].Amount = 0;
-            emit DefeatRefund(proposalId, proposser, amount);
+    function claimReward(uint256 _proposalId) external {
+        IERC20 token = IERC20(proposals[_proposalId].token);
+
+        if (state(_proposalId) == ProposalState.Succeeded) {
+            uint256 value = votes[_msgSender()][_proposalId];
+            uint256 share = (value/proposals[_proposalId].forVotes) * proposals[_proposalId].amount;
+            SafeERC20.safeTransfer(token, _msgSender(),share);
+            votes[_msgSender()][_proposalId] = 0;
+            emit SuccessClaim(_proposalId, _msgSender(), share);
+        } else if (state(_proposalId) == ProposalState.Defeated) {
+            address proposer = proposals[_proposalId].proposer;
+            require(_msgSender() == proposer, "Caller is not proposer");
+            uint256 amount = proposals[_proposalId].amount;
+            SafeERC20.safeTransfer(token, _msgSender(), amount);            
+            proposals[_proposalId].amount = 0;
+            emit DefeatRefund(_proposalId, proposer, amount);
         }
     }
     

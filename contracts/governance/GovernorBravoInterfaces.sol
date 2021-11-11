@@ -100,9 +100,9 @@ contract GovernorBravoDelegateStorageV1 is GovernorBravoDelegatorStorage {
         /// @notice Unique id for looking up a proposal
         uint256 id;
         // token address
-        address Token;
+        address token;
         // distribution amount
-        uint256 Amount;
+        uint256 amount;
         /// @notice Creator of the proposal
         address proposer;
         /// @notice The timestamp that the proposal will be available for execution, set once the vote succeeds

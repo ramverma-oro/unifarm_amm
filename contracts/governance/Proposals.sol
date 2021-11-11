@@ -1,49 +1,34 @@
 pragma solidity =0.5.16;
 
 import "../Ownable.sol";
+import '../BaseRelayRecipient.sol';
+import '../libraries/SafeMath.sol';
 
-contract Proposals is Ownable {
+contract Proposals is Ownable, BaseRelayRecipient {
+
+    using SafeMath for uint256;
+
     // blacklist mapping
     mapping(address => bool) public allowedList;
+    
+    // user address => proposalId => NumberofForVotes
+    mapping(address => mapping(uint256 => uint256)) votes;
 
-    struct Vote {
-        uint256 proposalId;
-        mapping(address => mapping(uint8 => uint256)) voteMapping;
-        address[] voters;
-    }
-
-    mapping(uint256 => Vote) _vote;
-
-    event Allow(
+    event TokenPermitted(
         address allowAddress
     );
 
-    event Voted(
-        uint256 proposalId,
-        address userAddress,
-        uint8 support,
-        uint256 token
-    );
-
     modifier isAllowed(address _tokenAddress){
-        require(!allowedList[_tokenAddress], "NOTALLOWED_ERR: address is not allowed");
+        require(allowedList[_tokenAddress], "NOTALLOWED_ERR: address is not allowed");
         _;
     }
 
-    function allow(address _allowAddress) external onlyOwner() {
-        allowedList[_allowAddress] = true;
-        emit Allow(_allowAddress);
+    function updateTokenPermission(address _allowAddress, bool _tokenPermit) external onlyOwner() {
+        allowedList[_allowAddress] = _tokenPermit;
+        emit TokenPermitted(_allowAddress);
     }
 
-    // function createProposal(address tokenAddress, uint256 _totalDistribution) {
-    //     // token distributed for the person who voted
-    
-    // }
-
-    function Voting(uint256 _proposalId, address _userAddress, uint8 _support, uint256 _token) internal {
-        _vote[_proposalId].proposalId = _proposalId;
-        _vote[_proposalId].voteMapping[_userAddress][_support] = _token;
-        _vote[_proposalId].voters.push(_userAddress);
-        emit Voted(_proposalId, _userAddress, _support, _token);
+    function _updateForVotes(uint256 _proposalId, uint256 _token) internal {
+        votes[_msgSender()][_proposalId] = votes[_msgSender()][_proposalId].add(_token);
     }
 }
